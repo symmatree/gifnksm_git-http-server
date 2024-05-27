@@ -10,7 +10,9 @@ readonly FCGI_PROGRAM=/usr/bin/fcgiwrap
 # Defaults from
 # https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine-slim/Dockerfile
 readonly GID="${OVERRIDE_GID:-101}"
-readonly UID="${OVERRIDE_GID:-101}"
+readonly UID="${OVERRIDE_UID:-101}"
+
+echo "permit keepenv nopass setenv { PATH } root" >> /etc/doas.conf
 
 if [ -z "${BASE_URL+x}" ]; then
   echo 'using default base_url'
@@ -22,7 +24,6 @@ else
 fi
 
 # We could do this in Dockerfile but it's as easy to do at runtime.
-
 # Only user in `users`
 deluser guest
 # We don't have "allow duplicate" so get rid of users first.
@@ -30,10 +31,10 @@ delgroup users
 
 # Get rid of existing user (will also delete group)
 deluser nginx
-echo "recreating user nginx with uid:gid ${UID}:${GID}"
-# -D -H: No password, no homedir.
+echo "recreating group nginx with gid ${GID}"
 addgroup -g "${GID}" nginx
-adduser -u "${UID}" -D -H -g "nginx within docker" nginx nginx
+echo "recreating user nginx with uid ${UID}"
+adduser -u "${UID}" -D -H -g "nginx within docker" -G nginx nginx
 
 env -i /usr/bin/spawn-fcgi \
   -s "${FCGI_SOCKET}" \

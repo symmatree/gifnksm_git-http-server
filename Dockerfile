@@ -10,7 +10,8 @@ RUN <<END
         openssl-dev
 END
 
-RUN --mount=type=bind,target=/usr/src/git-http-server,source=.,rw \
+# Only include ./cargo to keep . out of the context.
+RUN --mount=type=bind,target=/usr/src/git-http-server,source=./cargo,rw \
     --mount=type=cache,target=/usr/src/git-http-server/target \
     --mount=type=cache,target=/usr/local/cargo/registry \
     <<END
@@ -31,10 +32,8 @@ RUN apk --no-cache --update upgrade && \
     git-gitweb \
     perl-cgi \
     spawn-fcgi \
-    sudo \
+    doas \
     && \
-    adduser git -h /var/lib/git -D && \
-    adduser nginx git && \
     git config --system http.receivepack true && \
     git config --system http.uploadpack true && \
     git config --system user.email "gitserver@git.com" && \
